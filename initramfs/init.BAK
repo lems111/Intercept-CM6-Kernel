@@ -23,9 +23,6 @@ loglevel 3
     symlink /system/etc /etc
     symlink /sys/kernel/debug /d
 
-# Kernel version
-    setprop ro.build.display.id "Intercept_Stock_Kernel"
-
     insmod /lib/modules/xsr.ko
     insmod /lib/modules/dpram.ko
 
@@ -119,28 +116,16 @@ loglevel 3
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
     # mount yaffs2 mtd@system /system
     # mount yaffs2 mtd@system /system ro remount
-    mount rfs /dev/stl6 /system ro xattr,check=no
-    mount ext2 /dev/stl6 /system ro nodev noatime nodiratime
+    # mount yaffs2 /dev/bml5 /system
+    mount rfs /dev/block/stl5 /system ro nosuid nodev xattr,check=no
+    # mount rfs /dev/stl5 /system ro xattr,check=no
 
     # We chown/chmod /data again so because mount is run as root + defaults
     # mount yaffs2 mtd@userdata /data nosuid nodev
     # mount yaffs2 /dev/bml6 /data nosuid nodev
-    mount rfs /dev/stl5 /data nosuid nodev xattr,check=no
-    mount ext2 /dev/stl5 /data nosuid nodev noatime nodiratime
-    mount ext4 /dev/stl5 /data nosuid nodev noatime nodiratime data=ordered
+    mount rfs /dev/block/stl6 /data nosuid nodev xattr,check=no
     chown system system /data
     chmod 0771 /data
-    chmod 0666 /dev/log/radio
-    chmod 0666 /dev/log/main
-
-    #Dynamic Soundfix
-    exec /xbin/busybox sh -c "cat /data/misc/xmister/soundfix > /proc/xmister/soundfix"
-
-    #Dynamic Undervolt
-    exec /xbin/busybox sh -c "cat /data/misc/xmister/undervolt > /proc/xmister/undervolt"
-
-    #Dynamic Audio Buffer
-    exec /xbin/busybox sh -c "cat /data/misc/xmister/buffer > /proc/xmister/buffer"
 
     # Create dump dir and collect dumps.
     # Do this before we mount cache so eventually we can use cache for
@@ -161,24 +146,11 @@ loglevel 3
 
     write /proc/apanic_console 1
 
-    # Collect ramconsole data
-    copy /proc/last_kmsg /data/dontpanic/last_kmsg
-    chown root log /data/dontpanic/last_kmsg
-    chmod 0640 /data/dontpanic/last_kmsg
-
     # Same reason as /data above
     # mount yaffs2 mtd@cache /cache nosuid nodev
-    mount rfs /dev/stl7 /cache nosuid nodev xattr,check=no
-    mount ext2 /dev/stl7 /cache nosuid nodev noatime nodiratime
+    mount rfs /dev/block/stl7 /cache nosuid nodev xattr,check=no
     chown system cache /cache
     chmod 0770 /cache
-
-    # We chown/chmod /efs again so because mount is run as root + defaults
-    # mount yaffs2 mtd@userdata /data nosuid nodev
-    #mount yaffs2 /dev/bml10 /efs nosuid nodev
-    mount rfs /dev/stl10 /efs nosuid nodev xattr,check=no
-    chown radio radio /efs
-    chmod 0770 /efs
 
     # This may have been created by the recovery system with odd permissions
     chown system cache /cache/recovery
@@ -218,7 +190,7 @@ loglevel 3
     mkdir /data/misc/systemkeys 0700 system system
     mkdir /data/misc/vpn/profiles 0770 system system
 # give system access to wpa_supplicant.conf for backup and restore
-#    mkdir /data/log 0777 system system
+    mkdir /data/log 0777 system system
 
 # to enable wifi
     mkdir /data/wifi 0777 wifi wifi
@@ -226,20 +198,13 @@ loglevel 3
     chmod 0770 /data/misc/wifi
     mkdir /data/misc/dhcp 0777 dhcp dhcp
     mkdir /data/misc/wifi/sockets 0777 wifi wifi
-    chmod 0660 /data/misc/wifi/wpa_supplicant.conf
+    chmod 0660 /system/etc/wifi/wpa_supplicant.conf
     mkdir /data/local 0771 shell shell
     mkdir /data/local/tmp 0771 shell shell
     mkdir /data/data 0771 system system
     mkdir /data/app-private 0771 system system
     mkdir /data/app 0771 system system
     mkdir /data/property 0700 root root
-
-# for AppsOnSD keystore
-    mkdir /data/misc/systemkeys 700 system system
-
-    # create log system 
-    mkdir /data/log  0777 root root 
-    chmod 0777 /data/log
 
     # create dalvik-cache and double-check the perms
     mkdir /data/dalvik-cache 0771 system system
@@ -258,7 +223,6 @@ loglevel 3
 
 # to enable wifi
     setprop wifi.interface "eth0"
-	setprop wlan.driver.status "ok" 
 
     chown root root /system/bin/wlservice
     chmod 6777 /system/bin/wlservice
@@ -269,33 +233,6 @@ loglevel 3
 
 # video player for m.youtube.com
     mkdir /data/data/.youtube 0777
-
-    symlink /dev/snd/pcmC0D0c /dev/pcmC0D0c
-    symlink /dev/snd/pcmC0D0p /dev/pcmC0D0p
-    symlink /dev/snd/controlC0 /dev/controlC0
-    symlink /dev/snd/timer /dev/timer
-    chmod 0777 /dev/pcmC0D0c
-    chmod 0777 /dev/pcmC0D0p
-    chmod 0777 /dev/controlC0
-    chmod 0777 /dev/timer
-    chown root audio /dev/snd/controlC0
-    chown root audio /dev/snd/pcmC0D0c
-    chown root audio /dev/snd/pcmC0D0p
-    chown root audio /dev/snd/timer
-
-    setprop alsa.mixer.playback.master "Output Volume - SPK/EAR"
-    setprop alsa.mixer.playback.earpiece "Output Volume - RCV"
-    setprop alsa.mixer.playback.speaker "Output Volume - SPK/EAR"
-    setprop alsa.mixer.playback.headset "Output Volume - SPK/EAR"
-    setprop alsa.mixer.playback.bluetooth.sco "Output Volume - SPK/EAR"
-    setprop alsa.mixer.playback.bluetooth.a2dp "Output Volume - SPK/EAR"
-
-    setprop alsa.mixer.capture.master "Capture"
-    setprop alsa.mixer.capture.earpiece "Capture"
-    setprop alsa.mixer.capture.speaker "Capture"
-    setprop alsa.mixer.capture.headset "Capture"
-    setprop alsa.mixer.capture.bluetooth.sco "Capture"
-    setprop alsa.mixer.capture.bluetooth.a2dp "Capture"
 
 on boot
 # basic network init
@@ -385,8 +322,6 @@ on boot
     chown system system /sys/kernel/ipv4/tcp_rmem_max
     chown root radio /proc/cmdline
 
-# make hidden folder for divx authentication
-    mkdir /data/.svix 0770 system system
     chmod 0777 /sys/class/timed_output/flash/enable
     chmod 0777 /sys/class/switch/send_end/state
     chmod 0777 /sys/class/timed_output/vibrator/enable
@@ -404,12 +339,6 @@ on boot
     chmod 0777 /system/etc/audio/stream_speaker.txt
     chmod 0777 /system/etc/audio/stream_earpiece.txt
 #bootsnd
-    chmod 0777 /data/lmfilter.txt
-    chmod 0777 /data/eqfilter.txt
-    chmod 0777 /data/situation.txt 
-    chmod 0777 /data/stream_headset.txt
-    chmod 0777 /data/stream_speaker.txt
-# bootsnd
     setprop audioflinger.bootsnd 1
 #sec_feature_sprint_audio
 #for camcording
@@ -420,9 +349,6 @@ on boot
     chmod 0777 /sys/class/sec/ts/enhance_oj
     chmod 0777 /sys/class/sec/lj/firmware
 
-# for ctrl cpu freq.
-    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-    chmod 0666 /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 # +++++++++++++++++++++++++++++++++++++++++++
 # for Bluetooth
     chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
@@ -472,20 +398,13 @@ on boot
 ## Daemon processes to be run by init.
 ##
 service console /system/bin/sh
+    user shell
+    group shell system log
     console
-
-# add 2009.12.01
-# akmd service 
-# compass etc
-#
-# Thanks to DE-NISkA!
-#
-service akmd /system/bin/akmd 0 0
-    user compass
-    group compass misc input
 
 # adbd is controlled by the persist.service.adb.enable system property
 service adbd /sbin/adbd
+    group shell log
     disabled
 
 # adbd on at boot in emulator
@@ -510,7 +429,6 @@ service servicemanager /system/bin/servicemanager
     onrestart restart zygote
     onrestart restart media
 
-# Volume Manager (SD/USB?)
 service vold /system/bin/vold
     socket vold stream 0660 root mount
     ioprio be 2
@@ -577,7 +495,7 @@ service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-sys
     onrestart restart media
 
 service media /system/bin/mediaserver
-    user media root
+    user media
     group system audio camera graphics inet net_bt net_bt_admin net_raw
     ioprio rt 4
 
@@ -598,20 +516,10 @@ service dbus /system/bin/dbus-daemon --system --nofork
     user bluetooth
     group bluetooth net_bt_admin
 
-
-service bluetoothd /system/bin/bluetoothd -n /etc/blutooth/main.conf
-    socket bluetooth stream 660 bluetooth bluetooth
-    socket dbus_bluetooth stream 660 bluetooth bluetooth
-    # init.rc does not yet support applying capabilities, so run as root and
-    # let bluetoothd drop uid to bluetooth with the right linux capabilities
-    group bluetooth net_bt_admin misc
-    disabled
-
  # Start BTLD -----------------------------------------
 service btld /system/bin/logwrapper /system/bin/btld -hb 3000000 -hp /dev/s3c_serial1 -lpm 1
-#shiks_DJ11    
-	user root
-    group bluetooth net_bt_admin misc
+#shiks_DJ11    user root
+    group bluetooth net_bt_admin
     disabled
     oneshot
 
@@ -627,6 +535,13 @@ service obexd /system/bin/logwrapper /system/bin/obexd
     oneshot
 
 
+service bluetoothd /system/bin/bluetoothd -n
+    socket bluetooth stream 660 bluetooth bluetooth
+    socket dbus_bluetooth stream 660 bluetooth bluetooth
+    # init.rc does not yet support applying capabilities, so run as root and
+    # let bluetoothd drop uid to bluetooth with the right linux capabilities
+    group bluetooth net_bt_admin misc
+    disabled
 
 service hfag /system/bin/sdptool add --channel=10 HFAG
     user bluetooth
@@ -653,25 +568,12 @@ service pbap /system/bin/sdptool add --channel=19 PBAP
     oneshot
 # End of Bluetooth =========================================================================
 
-service ftp /system/bin/sdptool add --channel=20 FTP
-    user bluetooth
-    group bluetooth net_bt_admin
-    disabled
-    oneshot
-
 #HCI_ENABLE_BT_DEV_UNDER_TEST_MODE
 service bt_dut_cmd /system/bin/brcm_dutMode
     user root
     group bluetooth net_bt_admin
     disabled
     oneshot
-
-service hciattach /system/bin/brcm_patchram_plus -d --baudrate 3000000 --patchram /system/bin/BCM4325D1_004.002.004.0153.0173.hcd --enable_hci /dev/s3c_serial1
-    user bluetooth
-    group bluetooth net_bt_admin
-    disabled
-    oneshot
-
 service installd /system/bin/installd
     socket installd stream 600 system system
 
@@ -680,8 +582,8 @@ service pppd_cdma /system/bin/pppd_runner
     group radio cache inet misc system
     disabled
     oneshot
-#service flash_recovery /system/etc/install-recovery.sh
-#    oneshot
+service flash_recovery /system/etc/install-recovery.sh
+    oneshot
 
 service racoon /system/bin/racoon
     socket racoon stream 600 system system
@@ -714,10 +616,4 @@ on property:service.iq.active=0
 service dumpstate /system/bin/dumpstate -s
     socket dumpstate stream 0660 shell log
     disabled
-    oneshot
-
-# compcache
-service compcache /system/bin/handle_compcache
-    user root
-    group root
     oneshot

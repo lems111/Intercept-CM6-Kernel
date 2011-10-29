@@ -1,0 +1,5 @@
+
+***Below modules are used to support OpenVPN Application***
+tun.ko kernel module (for the tun/tap virtual network device), was built from DNS-313 Linux kernel source. It was also necessary to build crc32.ko, because tun.ko module depends on it
+
+ramzswap.ko - is used by kernel when sdcard is removed to disallocate memory related to the interface with the card removed. Read more at: http://code.google.com/p/compcache/wiki/CompilingAndUsingNew
